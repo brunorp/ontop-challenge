@@ -28,20 +28,6 @@ import java.util.List;
 
 /**
  * Spring Security Configuration
- * 
- * Security features:
- * - JWT-based stateless authentication
- * - BCrypt password encoding (industry standard)
- * - CORS configuration
- * - CSRF protection disabled (using JWT, stateless)
- * - Security headers (XSS, clickjacking, etc.)
- * - Role-based access control
- * 
- * OWASP Best Practices:
- * - Strong password hashing (BCrypt with cost factor 10)
- * - Stateless sessions (no session fixation attacks)
- * - Proper CORS configuration
- * - HTTPS recommended in production
  */
 @Configuration
 @EnableWebSecurity
@@ -55,8 +41,6 @@ public class SecurityConfig {
 
     /**
      * Password encoder using BCrypt
-     * BCrypt is resistant to rainbow table attacks and includes salt automatically
-     * Cost factor 10 is a good balance between security and performance
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -108,7 +92,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/**").permitAll() // Allow Actuator endpoints for monitoring
                         .requestMatchers("/error").permitAll()
                         
                         // Swagger/API docs (if needed)

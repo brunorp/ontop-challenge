@@ -57,7 +57,27 @@ resilience4j:
         retry-exceptions:
           - org.springframework.web.client.ResourceAccessException
           - org.springframework.web.client.HttpServerErrorException
-  
+
+management:
+  metrics:
+    export:
+      elastic:
+        enabled: true
+        host: ${ELASTICSEARCH_HOST:http://localhost:9200}
+        index: metrics-ontop
+        step: 10s
+        auto-create-index: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+
   circuitbreaker:
     instances:
       walletService:
