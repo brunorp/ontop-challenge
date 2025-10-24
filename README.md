@@ -302,8 +302,6 @@ stateDiagram-v2
     PENDING --> PROCESSING: Start async processing
     PROCESSING --> COMPLETED: Payment successful
     PROCESSING --> FAILED: Payment/Wallet error
-    COMPLETED --> [*]
-    FAILED --> [*]
     
     note right of PENDING
         Initial state
