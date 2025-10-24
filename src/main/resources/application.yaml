@@ -11,3 +11,86 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+ontop:
+  withdrawal:
+    fee-percentage: 0.10
+    company-account:
+      name: ONTOP INC
+      account-number: 0245253419
+      routing-number: 028444018
+      currency: USD
+  clients:
+    wallet-base-url: ${WALLET_BASE_URL:http://mockoon.tools.getontop.com:3000}
+    payments-base-url: ${PAYMENTS_BASE_URL:http://mockoon.tools.getontop.com:3000/api/v1}
+
+resilience4j:
+  retry:
+    instances:
+      walletService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+      paymentsService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+  
+  circuitbreaker:
+    instances:
+      walletService:
+        sliding-window-size: 10
+        sliding-window-type: COUNT_BASED
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - com.ontop.challenge.application.exception.ExternalServiceException
+          - org.springframework.web.client.HttpServerErrorException
+      paymentsService:
+        sliding-window-size: 10
+        sliding-window-type: COUNT_BASED
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - com.ontop.challenge.application.exception.ExternalServiceException
+          - org.springframework.web.client.HttpServerErrorException
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:ThisIsAVeryLongSecretKeyForJWTTokenGenerationThatMustBeAtLeast256BitsLongForHS256AlgorithmPleaseChangeInProduction}
+  expiration: ${JWT_EXPIRATION:900000} # 15 minutes in milliseconds
+
+logging:
+  level:
+    root: INFO
+    com.ontop: DEBUG
+    io.github.resilience4j: DEBUG
+    org.springframework.security: DEBUG
