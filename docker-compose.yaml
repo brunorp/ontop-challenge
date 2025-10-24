@@ -23,9 +23,25 @@ services:
     depends_on:
       - postgres
 
+  redis:
+    image: redis:7-alpine
+    container_name: ontop-redis
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 # --- Instructions ---
 # To start the services in detached mode (background), run the following command in the project root:
 # docker-compose up -d
 
 # PostgreSQL Connection URL (for applications):
 # jdbc:postgresql://localhost:5433/ontop
+# Redis Connection URL:
+# redis://localhost:6379
