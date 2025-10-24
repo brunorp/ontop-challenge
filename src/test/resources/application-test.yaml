@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: challenge-test
+  # Disable security for most tests (can be enabled per-test with @WithMockUser)
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ontop
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+
+ontop:
+  withdrawal:
+    fee-percentage: 0.10
+    company-account:
+      name: ONTOP INC TEST
+      account-number: 0245253419
+      routing-number: 028444018
+      currency: USD
+  clients:
+    wallet-base-url: http://localhost:8888
+    payments-base-url: http://localhost:8888/api/v1
+
+# Resilience4j Configuration for Testing
+resilience4j:
+  retry:
+    instances:
+      walletService:
+        max-attempts: 3
+        wait-duration: 100ms  # Faster for testing
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+      paymentsService:
+        max-attempts: 3
+        wait-duration: 100ms  # Faster for testing
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+  
+  circuitbreaker:
+    instances:
+      walletService:
+        sliding-window-size: 10
+        sliding-window-type: COUNT_BASED
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 1s  # Shorter for testing
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: false  # Manual control in tests
+        record-exceptions:
+          - com.ontop.challenge.application.exception.ExternalServiceException
+          - org.springframework.web.client.HttpServerErrorException
+      paymentsService:
+        sliding-window-size: 10
+        sliding-window-type: COUNT_BASED
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 1s  # Shorter for testing
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: false  # Manual control in tests
+        record-exceptions:
+          - com.ontop.challenge.application.exception.ExternalServiceException
+          - org.springframework.web.client.HttpServerErrorException
+
+logging:
+  level:
+    root: WARN
+    com.ontop: DEBUG
+    io.github.resilience4j: DEBUG
+
