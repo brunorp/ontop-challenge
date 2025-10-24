@@ -1,0 +1,134 @@
+{
+	"info": {
+		"_postman_id": "0f59e6a6-8728-4870-88e7-9c7580dfbcb6",
+		"name": "Test API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1797460"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "register - user",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"test\",\r\n    \"password\": \"Test123!\"\r\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST http://localhost:8080/api/v1/auth/register \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n    \"username\": \"johndoe\",\r\n    \"email\": \"john@example.com\",\r\n    \"password\": \"SecurePass123!\",\r\n    \"firstName\": \"John\",\r\n    \"lastName\": \"Doe\"\r\n  }'"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"test\",\r\n    \"password\": \"Test123!\"\r\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST http://localhost:8080/api/v1/auth/login \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n    \"username\": \"johndoe\",\r\n    \"password\": \"SecurePass123!\"\r\n  }'"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Withdraw endpoint",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Idempotency-Key",
+						"value": "4232322"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJlNTVhOTVhZS03MDJhLTQ5MDgtODQ1Ny1lNGNlMzhhODZlZDciLCJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXSwic3ViIjoidGVzdCIsImlhdCI6MTc2MTI0MTAzNSwiZXhwIjoxNzYxMjQxOTM1fQ.ihKP2VNMUWFAG0B7XlXNE5jhMGp4XznE-47LrMj2eKo",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\": 12,\r\n    \"account_id\": \"6017b135-c66f-44b6-af33-6ff48197dd9c\",\r\n    \"amount\": 1350,\r\n    \"currency\": \"USD\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/withdrawals",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"withdrawals"
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://localhost:8080/api/v1/withdrawals \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -H \"Idempotency-Key: abcd-1234\" \\\r\n  -d '{\"user_id\":1000,\"account_id\":\"d8d5f7b9-...\",\"amount\":1000,\"currency\":\"USD\"}'"
+			},
+			"response": []
+		}
+	]
+}
