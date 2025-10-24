@@ -359,14 +359,14 @@ graph TB
     end
     
     Client -->|HTTP/JSON| JWT
-    JWT -->|Authenticated| Auth
+    Client -->|HTTP/JSON| Auth
     JWT -->|Authenticated| Withdrawal
     
     Auth -->|Register/Login| AuthService
     Withdrawal -->|Create Withdrawal| WithdrawService
     Withdrawal -->|Check Cache| IdempotencyService
-    
-    WithdrawService -->|Publish Event| EventListener
+    Withdrawal -->|Publish Event| EventListener
+
     EventListener -->|Process Async| WithdrawService
     
     WithdrawService -->|Get Balance| WalletAPI
