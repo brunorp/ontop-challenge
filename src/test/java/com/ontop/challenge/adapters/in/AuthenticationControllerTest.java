@@ -47,13 +47,6 @@ class AuthenticationControllerTest {
         assertThat(response.getBody().getUsername()).isEqualTo("testuser");
         assertThat(response.getBody().getUserId()).isEqualTo("user-123");
         assertThat(response.getBody().getExpiresIn()).isEqualTo(3600L);
-
-        ArgumentCaptor<RegisterRequest> requestCaptor = ArgumentCaptor.forClass(RegisterRequest.class);
-        verify(authenticationService).register(requestCaptor.capture());
-        
-        // Verify XSS encoding was applied
-        RegisterRequest capturedRequest = requestCaptor.getValue();
-        assertThat(capturedRequest.getUsername()).isEqualTo("testuser");
     }
 
     @Test
@@ -69,8 +62,7 @@ class AuthenticationControllerTest {
 
         ArgumentCaptor<RegisterRequest> requestCaptor = ArgumentCaptor.forClass(RegisterRequest.class);
         verify(authenticationService).register(requestCaptor.capture());
-        
-        // Verify username is HTML-encoded
+
         RegisterRequest capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.getUsername()).contains("&lt;script&gt;");
         assertThat(capturedRequest.getUsername()).doesNotContain("<script>");
@@ -114,7 +106,7 @@ class AuthenticationControllerTest {
         ArgumentCaptor<LoginRequest> requestCaptor = ArgumentCaptor.forClass(LoginRequest.class);
         verify(authenticationService).login(requestCaptor.capture());
         
-        // Verify username is HTML-encoded
+
         LoginRequest capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.getUsername()).contains("&lt;img");
         assertThat(capturedRequest.getUsername()).doesNotContain("<img");

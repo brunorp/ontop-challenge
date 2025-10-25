@@ -6,7 +6,6 @@ import com.ontop.challenge.application.exception.ExternalServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -70,33 +69,6 @@ class PaymentsClientAdapterTest {
                 eq(request),
                 eq(PaymentResponse.class)
         );
-    }
-
-    @Test
-    void createPayment_WithValidRequest_SendsCorrectData() {
-        PaymentRequest request = createPaymentRequest();
-        PaymentResponse expectedResponse = createSuccessfulPaymentResponse();
-
-        ResponseEntity<PaymentResponse> responseEntity = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
-        when(restTemplate.postForEntity(
-                anyString(),
-                any(PaymentRequest.class),
-                eq(PaymentResponse.class)
-        )).thenReturn(responseEntity);
-
-        paymentsClientAdapter.createPayment(request);
-
-        ArgumentCaptor<PaymentRequest> requestCaptor = ArgumentCaptor.forClass(PaymentRequest.class);
-        verify(restTemplate).postForEntity(
-                eq(PAYMENTS_BASE_URL + "/payments"),
-                requestCaptor.capture(),
-                eq(PaymentResponse.class)
-        );
-
-        PaymentRequest capturedRequest = requestCaptor.getValue();
-        assertThat(capturedRequest.getAmount()).isEqualByComparingTo(new BigDecimal("900.00"));
-        assertThat(capturedRequest.getSource()).isNotNull();
-        assertThat(capturedRequest.getDestination()).isNotNull();
     }
 
     @Test

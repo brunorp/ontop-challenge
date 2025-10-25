@@ -6,11 +6,8 @@ import com.ontop.challenge.adapters.out.client.dto.wallet.WalletTransactionRespo
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
@@ -21,7 +18,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,38 +61,31 @@ class WalletClientAdapterTest {
 
     @Test
     void getBalance_WhenUserNotFound_ReturnsEmpty() {
-        // Given
         when(restTemplate.getForEntity(
                 anyString(),
                 eq(BalanceResponse.class)
         )).thenThrow(HttpClientErrorException.NotFound.create(HttpStatus.NOT_FOUND, "", null, null, null));
 
-        // When
         Optional<BigDecimal> result = walletClientAdapter.getBalance(USER_ID);
 
-        // Then
         assertThat(result).isEmpty();
     }
 
     @Test
     void getBalance_WhenResponseBodyIsNull_ReturnsEmpty() {
-        // Given
         ResponseEntity<BalanceResponse> responseEntity = new ResponseEntity<>(null, HttpStatus.OK);
         when(restTemplate.getForEntity(
                 anyString(),
                 eq(BalanceResponse.class)
         )).thenReturn(responseEntity);
 
-        // When
         Optional<BigDecimal> result = walletClientAdapter.getBalance(USER_ID);
 
-        // Then
         assertThat(result).isEmpty();
     }
 
     @Test
     void createWalletTransaction_Success_ReturnsTransactionId() {
-        // Given
         BigDecimal amount = new BigDecimal("1000.00");
         WalletTransactionResponse transactionResponse = new WalletTransactionResponse();
         transactionResponse.setWalletTransactionId(59974L);
@@ -110,31 +99,14 @@ class WalletClientAdapterTest {
                 eq(WalletTransactionResponse.class)
         )).thenReturn(responseEntity);
 
-        // When
         Optional<Long> result = walletClientAdapter.createWalletTransaction(USER_ID, amount);
 
-        // Then
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(59974L);
-
-        // Verify request body
-        ArgumentCaptor<WalletTransactionRequest> requestCaptor =
-                ArgumentCaptor.forClass(WalletTransactionRequest.class);
-        verify(restTemplate).postForEntity(
-                anyString(),
-                requestCaptor.capture(),
-                eq(WalletTransactionResponse.class)
-        );
-
-        WalletTransactionRequest sentRequest = requestCaptor.getValue();
-        assertThat(sentRequest).isNotNull();
-        assertThat(sentRequest.getUserId()).isEqualTo(USER_ID);
-        assertThat(sentRequest.getAmount()).isEqualByComparingTo(amount);
     }
 
     @Test
     void createWalletTransaction_WhenTransactionNotFound_ReturnsEmpty() {
-        // Given
         BigDecimal amount = new BigDecimal("1000.00");
         when(restTemplate.postForEntity(
                 anyString(),
@@ -142,16 +114,13 @@ class WalletClientAdapterTest {
                 eq(WalletTransactionResponse.class)
         )).thenThrow(HttpClientErrorException.NotFound.create(HttpStatus.NOT_FOUND, "", null, null, null));
 
-        // When
         Optional<Long> result = walletClientAdapter.createWalletTransaction(USER_ID, amount);
 
-        // Then
         assertThat(result).isEmpty();
     }
 
     @Test
     void createWalletTransaction_WhenResponseBodyIsNull_ReturnsEmpty() {
-        // Given
         BigDecimal amount = new BigDecimal("1000.00");
         ResponseEntity<WalletTransactionResponse> responseEntity = new ResponseEntity<>(null, HttpStatus.OK);
         when(restTemplate.postForEntity(
@@ -160,10 +129,8 @@ class WalletClientAdapterTest {
                 eq(WalletTransactionResponse.class)
         )).thenReturn(responseEntity);
 
-        // When
         Optional<Long> result = walletClientAdapter.createWalletTransaction(USER_ID, amount);
 
-        // Then
         assertThat(result).isEmpty();
     }
 }

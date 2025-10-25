@@ -23,7 +23,6 @@ class TransactionMapperTest {
 
     @Test
     void jpaToTransaction_MapsAllFieldsCorrectly() {
-        // Given
         UUID id = UUID.randomUUID();
         UUID destinationAccountId = UUID.randomUUID();
         Instant now = Instant.now();
@@ -45,10 +44,8 @@ class TransactionMapperTest {
                 .version(1L)
                 .build();
 
-        // When
         Transaction result = transactionMapper.JpaToTransaction(entity);
 
-        // Then
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(id);
         assertThat(result.getUserId()).isEqualTo(1000L);
