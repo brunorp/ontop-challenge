@@ -129,7 +129,7 @@ java -jar build/libs/challenge-0.0.1-SNAPSHOT.jar
 
 ---
 
-## 🧪 Testing the Endpoints
+## 🧪 Testing the Endpoints Manually
 
 Import the API collection: `./Test-API.postman_collection.json`
 
@@ -447,6 +447,7 @@ erDiagram
         varchar routing_number "NOT NULL"
         varchar account_number "NOT NULL"
         varchar bank_name "NOT NULL"
+        varchar last_four "NOT NULL"
         varchar national_id "NOT NULL"
         boolean is_default "Default account for withdrawals"
         timestamp created_at "NOT NULL"
@@ -484,9 +485,12 @@ Content-Type: application/json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "user_id": "uuidxyz",
-  "accountHolderName": "John Doe",
+  "accountHolderName": "John",
+  "accountHolderSurname": "xyz",
   "routingNumber": "021000021",
-  "bankName": "Chase Bank",
+  "last_four": "2671",
+  "bankName": "Xyz Bank",
+  "nationalId": "123-45-6789",
   "isDefault": true,
   "createdAt": "2025-10-24T10:30:00Z"
 }
@@ -505,18 +509,24 @@ Authorization: Bearer {jwt_token}
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "accountHolderName": "John",
+      "accountHolderSurname": "xyz",
       "routingNumber": "021000021",
+      "last_four": "2671",
       "bankName": "LaLa Bank",
       "isDefault": true,
+      "nationalId": "123-45-6789",
       "lastUsedAt": "2025-10-23T15:45:00Z",
       "createdAt": "2025-10-20T10:30:00Z"
     },
     {
       "id": "660e8400-e29b-41d4-a716-446655440001",
       "accountHolderName": "John",
+      "accountHolderSurname": "xyz",
       "routingNumber": "011401533",
+      "last_four": "2671",
       "bankName": "Pato Bank",
       "isDefault": false,
+      "nationalId": "123-45-6789",
       "lastUsedAt": "2025-10-15T09:20:00Z",
       "createdAt": "2025-10-15T08:00:00Z"
     }
@@ -531,21 +541,23 @@ GET /api/v1/accounts/{userId}/{accountId}
 Authorization: Bearer {jwt_token}
 ```
 
-##### 4. **Update Bank Account**
-```http
-PUT /api/v1/accounts/{userId}/{accountId}
-Authorization: Bearer {jwt_token}
-Content-Type: application/json
-
-{
-  "accountNickname": "Primary Checking",
-  "isDefault": true
-}
+**Response (200 OK)**
+```json
+  {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "accountHolderName": "John",
+      "accountHolderSurname": "xyz",
+      "routingNumber": "021000021",
+      "last_four": "2671",
+      "bankName": "LaLa Bank",
+      "isDefault": true,
+      "nationalId": "123-45-6789",
+      "lastUsedAt": "2025-10-23T15:45:00Z",
+      "createdAt": "2025-10-20T10:30:00Z"
+  }
 ```
 
-**Note**: For security, sensitive fields (account number, national ID, routing number) cannot be updated. User must delete and recreate.
-
-##### 5. **Delete Bank Account**
+##### 4. **Delete Bank Account**
 ```http
 DELETE /api/v1/accounts/{userId}/{accountId}
 Authorization: Bearer {jwt_token}
@@ -559,7 +571,7 @@ Authorization: Bearer {jwt_token}
 }
 ```
 
-##### 6. **Set Default Account**
+##### 5. **Set Default Account**
 ```http
 POST /api/v1/accounts/{userId}/{accountId}/set-default
 Authorization: Bearer {jwt_token}
@@ -568,22 +580,21 @@ Authorization: Bearer {jwt_token}
 #### Security Measures
 
 1. **Encryption at Rest**
-    - `account_number`: encrypted
+    - `account_number`: encrypted, only return last 4 digits (`last_four`)
     - `national_id`: encrypted
 
+
 2. **Data Access Controls**
-    - User can only access their own accounts
+    - User can only access their own accounts (check between the userID sent and the user extracted from JWT)
     - Role-based access: `USER` can CRUD their accounts, `ADMIN` can view all (audit)
 
 4. **Validation Rules**
-    - **Account Number**: 4-17 digits
-    - **National ID**: Format validation based on country (SSN: XXX-XX-XXXX)
+    - **Account Number**: X-Y digits
+    - **National ID**: Format validation based on country
     - **Account Holder Name**: Match authenticated user's name
 
 5. **Rate Limiting**
-    - Max 5 accounts per user
     - Max 3 account creation requests per hour
-    - Max 10 failed verification attempts
 
 #### Withdrawal Integration
 
@@ -596,20 +607,35 @@ Content-Type: application/json
 
 {
   "userId": 1000,
-  "destinationAccountId": "550e8400-e29b-41d4-a716-446655440000",
+  "account_id": "550e8400-e29b-41d4-a716-446655440000",
   "amount": 1000.00,
   "currency": "USD"
 }
 ```
 
 **Business Rules:**
-- If `destinationAccountId` not provided, use default account
+- If `account_id` not provided, use default account
 - Account must belong to authenticated user
 - Update `last_used_at` timestamp after successful withdrawal
+
 - User call the endpoint to create the account
-  - Check if the req body userId is the same user as the one extracted from jwt 
-  - Account is created both ON BANK_ACCOUNTS table and USER_ACCOUNTS table
-- List all accounts can be used in a page where user can see all the accounts where he can update/delete/set as default.
+  - Check if the req body `userId` is the same user as the one extracted from `jwt`
+  - Extract last 4 digits from the `accountNumber` and then encrypt it to save in the db.
+  - Account is created both ON `BANK_ACCOUNTS` table and `USER_ACCOUNTS` table using `TRANSACTION` for consistency.
+- List all accounts can be used in a page where user can see all the accounts and can update/delete/set as default.
+
+#### Caching Strategy
+
+1. **Redis Cache for Bank Accounts**
+   ```
+   Key: bank-account:user:{userId}
+   TTL: 7 days
+   Value: List with the bank accounts
+   ```
+When the `BANK_ACCOUNTS` table and `USER_ACCOUNTS` tables are updated, the cache is invalidated for the user.
+When the list bank accounts endpoint is requested, check if already exists in the cache, if yes return, if not 
+go to the database and then save in the cache
+
 
 ---
 
@@ -621,8 +647,6 @@ Content-Type: application/json
 
 ```mermaid
 erDiagram
-    TRANSACTIONS ||--o{ TRANSACTION_EVENTS : has
-    
     TRANSACTION_EVENTS {
         uuid id PK
         uuid user_id FK
@@ -729,7 +753,7 @@ CREATE INDEX idx_transactions_created_status ON transacion_events(created_at DES
 1. **Redis Cache for Transactions**
    ```
    Key: transactions:user:{userId}
-   TTL: optional (probably I wont add it)
+   TTL: 7 days
    Value: Last X transactions
    ```
 When the transacion_events table is updated for one user that already have a key in the redis, 
@@ -749,3 +773,35 @@ the cache for this user is invalidated and when fetching the history again it wi
 **Business Rules:**
 - When the withdrawal endpoint is called and the transaction have the status as completed, it saves the transaction
 on the transaction_events table.
+
+## Alternative Approach
+Have 3 different microservices: 
+- `Transactions (Withdrawal and transaction history)`
+- `Bank Accounts`
+- `Auth/Users (Login, Register, Refresh Token, etc...)`
+
+Needs to be evaluated, some pros/cons:
+
+| pros                                                    | cons                                                 |
+|---------------------------------------------------------|------------------------------------------------------|
+| Scalability                                             | More deployment pipelines, monitoring, configs, etc. |
+| One DB/Tech stack for each case                         | Demands more knowledge from the team                 |
+| One DB/Service outage does not affect the other service |                                                      |
+
+The `Auth/Users` could even be a `Lambda with an API Gateway or event-based`, we pay only what we use, scales well, 
+it will be used only for `register` (low frequency), `login` and `token refreshes` (low frequency), also, it could be done in another language 
+to improve the code start con, like `Node` for example. 
+
+For the DB: 
+- DynamoDB since it's simple + serverless scaling, low cost for small loads, low maintenance. AP/EL
+- MongoDB to keep the tech stack if we already use it in other services, support more complex queries. CP/EL
+
+
+The `Bank Accounts` it will be accessed to `create acc` (low usage), `list accounts` (cached in Redis)
+so Transactions will very often get this from Redis), `delete acc` (low usage), `set default` (low usage). 
+Since it will not be used a lot, we can maybe use a `Lambda with an API Gateway` to reduce costs.
+
+For the DB: 
+- Postgres to keep the data structure, consistency and enforce the data types.
+
+The `Transactions` can be the same as implemented.
