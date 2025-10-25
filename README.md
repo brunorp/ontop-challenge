@@ -13,6 +13,13 @@ This system enables users to withdraw funds from their wallet to their bank acco
 - Tracks transaction status throughout the process
 - Provides comprehensive monitoring with Micrometer + Elasticsearch
 
+### Would have done
+- Use Kafka or any other similar technology
+- Kubernetes
+- terraform and pipeline (explained at Future Features (Design Only) section of this document)
+- Implement the hexagonal architecture for everything (Transaction is following this architecture to show how I'd do it for everything)
+- More tests
+
 ### Key Features
 
 ✅ **Secure Authentication**: JWT-based authentication with BCrypt password hashing  
@@ -432,6 +439,103 @@ src/
 ---
 
 ## Future Features (Design Only)
+
+### 1 Complete CI/CD Pipeline
+
+### **Step 1: Terraform Infrastructure Provisioning**
+- Terraform provisions all AWS resources.
+
+**Resources created:**
+- VPC with public/private subnets across multiple AZs
+- EKS cluster with node groups (autoscaling)
+- RDS PostgreSQL instance (Multi-AZ for production)
+- ElastiCache Redis cluster (Multi-AZ)
+- ECR repository for Docker images
+- Security groups, IAM roles, and policies
+- Application Load Balancer (ALB)
+- Route53 DNS records
+
+---
+
+## **Phase 2: Build Pipeline**
+
+### **Step 2.1: Code Quality**
+- Checkout code from repository
+- Code quality analysis with SonarQube
+- Run unit tests (JUnit)
+- Generate code coverage reports (JaCoCo)
+- Fail pipeline if quality gates are not met
+
+---
+
+### **Step 2.2: Build Java Application**
+- Build Spring Boot application using Gradle
+- Generate JAR
+
+---
+
+### **Step 2.3: Build Docker Image**
+- Build Docker image
+- Copy JAR file into container
+- Tag image with:
+  - Git commit SHA
+  - Branch name
+  - Semantic version
+
+---
+
+### **Step 2.4: Push to ECR**
+- Authenticate with AWS ECR using IAM credentials
+- Push Docker image to ECR repository
+- Scan image for vulnerabilities (ECR native scanning)
+- Tag image as `latest` if on main branch
+
+---
+
+## **Phase 3: Database Migration Pipeline**
+
+### **Step 3.1: Run Flyway Migrations**
+- Connect to RDS PostgreSQL instance
+- Run Flyway migrations from `src/main/resources/db/migration/`
+- Migrations run in order (V1, V2, V3, etc.)
+- Rollback on failure
+
+---
+
+## **Phase 4: Deployment to EKS**
+
+### **Step 4.1: Update Kubernetes Manifests**
+- Use Helm charts for configuration management
+- Configure environment-specific values:
+  - ConfigMap: Non-sensitive configs (RDS url, Redis url)
+  - Secrets: Sensitive data (DB credentials, etc)
+- Set resource limits (CPU/memory requests and limits)
+
+---
+
+### **Step 4.2: Deploy to Staging**
+- Use `kubectl apply` or `helm upgrade` in the staging namespace
+
+---
+
+### **Step 4.3: Run Integration Tests**
+- Execute tests against the staging environment:
+  - User registration and login
+  - Withdrawal creation with idempotency
+  - Redis caching verification
+  - External API integrations (Wallet, Payment Provider)
+
+---
+
+### **Step 4.4: Rollback if Integration Tests fails**
+- rollback
+
+---
+
+### **Step 4.5: Deploy to Production for merges to master**
+- Same process as staging but in production namespace
+
+---
 
 ### 2. Account Management
 
