@@ -24,26 +24,27 @@ This system enables users to withdraw funds from their wallet to their bank acco
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Detailed Flow Description
 
 #### Phase 1: Request Validation (Synchronous)
-1. Client sends withdrawal request with `Idempotency-Key` header and auth header
+1. Client sends withdrawal request with `Idempotency-Key` and `Authorization` headers
 2. JWT authentication filter validates the token
 3. Controller validates request body
 4. Check Redis for existing response with same idempotency key
 5. If found, return cached response immediately (201 CREATED)
+6. If not found, Phase 2.
 
 #### Phase 2: Transaction Creation (Synchronous)
 6. Query wallet service for current balance
 7. Calculate fee (10%) and net amount
 8. Verify sufficient funds (amount ≤ balance)
 9. Create PENDING transaction in database
-10. Return 202 ACCEPTED immediately to client
+10. Publish an event with the request and the created transaction
+11. Return 202 ACCEPTED immediately to client
 
 #### Phase 3: Background Processing (Asynchronous)
-11. Publish an event
 12. `WithdrawalListener` picks up event asynchronously
 13. Update transaction status to PROCESSING
 14. Debit user wallet via external API
@@ -63,6 +64,7 @@ This system enables users to withdraw funds from their wallet to their bank acco
 
 - `POST /api/v1/auth/register` - Register new user and get JWT token
 - `POST /api/v1/auth/login` - Login and get JWT token
+- FUTURE: Refresh token endpoint...
 
 ### Withdrawal Endpoints
 
@@ -131,7 +133,7 @@ java -jar build/libs/challenge-0.0.1-SNAPSHOT.jar
 
 ## 🧪 Testing the Endpoints Manually
 
-Import the API collection: `./Test-API.postman_collection.json`
+Import the API collection from the root folder: `./Test-API.postman_collection.json`
 
 ---
 
@@ -147,10 +149,10 @@ Import the API collection: `./Test-API.postman_collection.json`
 
 ## 🔒 Security
 
-- **Authentication**: JWT with HS256 signing
+- **Authentication**: JWT
 - **Password**: BCrypt hashing
 - **XSS Prevention**: OWASP Java Encoder
-- **Rate Limiting**: Bucket4j (future enhancement)
+- **Rate Limiting**: Bucket4j
 
 ---
 
